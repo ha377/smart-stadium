@@ -74,7 +74,9 @@ export default function TransitSustainability({ stadiumData, onLogEcoAction }) {
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <div className="form-group">
+              <label htmlFor="eco-username-input" style={{ display: "none" }}>Fan Nickname</label>
               <input 
+                id="eco-username-input"
                 type="text" 
                 className="form-input" 
                 placeholder="Enter nickname (e.g. EcoMessi_10)" 
@@ -84,7 +86,9 @@ export default function TransitSustainability({ stadiumData, onLogEcoAction }) {
             </div>
             
             <div className="form-group">
+              <label htmlFor="eco-action-select" style={{ display: "none" }}>Select Eco Action</label>
               <select 
+                id="eco-action-select"
                 className="form-select" 
                 value={ecoAction} 
                 onChange={(e) => setEcoAction(e.target.value)}

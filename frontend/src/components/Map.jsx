@@ -76,6 +76,16 @@ export default function Map({ stadiumData, onSelectZone, selectedZone, onSelectG
           strokeWidth={selectedZone === "A" ? 3 : 1}
           className="map-zone"
           onClick={() => onSelectZone("A")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedZone === "A"}
+          aria-label={`Zone A: ${zones?.A?.name || "Lower Bowl North"} - Status: ${zones?.A?.status || "Normal"}`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectZone("A");
+            }
+          }}
         />
         
         {/* Zone B: East Bowl */}
@@ -86,6 +96,16 @@ export default function Map({ stadiumData, onSelectZone, selectedZone, onSelectG
           strokeWidth={selectedZone === "B" ? 3 : 1}
           className="map-zone"
           onClick={() => onSelectZone("B")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedZone === "B"}
+          aria-label={`Zone B: ${zones?.B?.name || "Lower Bowl East"} - Status: ${zones?.B?.status || "Critical"}`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectZone("B");
+            }
+          }}
         />
 
         {/* Zone C: South Bowl */}
@@ -96,6 +116,16 @@ export default function Map({ stadiumData, onSelectZone, selectedZone, onSelectG
           strokeWidth={selectedZone === "C" ? 3 : 1}
           className="map-zone"
           onClick={() => onSelectZone("C")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedZone === "C"}
+          aria-label={`Zone C: ${zones?.C?.name || "Lower Bowl South"} - Status: ${zones?.C?.status || "Normal"}`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectZone("C");
+            }
+          }}
         />
 
         {/* Zone D: West Bowl */}
@@ -106,6 +136,16 @@ export default function Map({ stadiumData, onSelectZone, selectedZone, onSelectG
           strokeWidth={selectedZone === "D" ? 3 : 1}
           className="map-zone"
           onClick={() => onSelectZone("D")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedZone === "D"}
+          aria-label={`Zone D: ${zones?.D?.name || "Lower Bowl West"} - Status: ${zones?.D?.status || "High"}`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectZone("D");
+            }
+          }}
         />
 
         {/* Zone E: Outer Upper Level Overlay ring */}
@@ -120,6 +160,16 @@ export default function Map({ stadiumData, onSelectZone, selectedZone, onSelectG
           strokeDasharray="40 12"
           style={{ cursor: "pointer" }}
           onClick={() => onSelectZone("E")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedZone === "E"}
+          aria-label={`Zone E: ${zones?.E?.name || "Upper Level Outer"} - Status: ${zones?.E?.status || "Normal"}`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectZone("E");
+            }
+          }}
         />
 
         {/* Turf Pitch (Inner Soccer Field) */}
@@ -130,25 +180,77 @@ export default function Map({ stadiumData, onSelectZone, selectedZone, onSelectG
 
         {/* Interactive Gates Markers */}
         {/* Gate 1 (North) */}
-        <g className="map-gate" onClick={() => onSelectGate("Gate 1")}>
+        <g 
+          className="map-gate" 
+          onClick={() => onSelectGate("Gate 1")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedGate === "Gate 1"}
+          aria-label={`Gate 1: Verizon Gate (North) - Wait: ${gates?.find(g => g.id === "Gate 1")?.waitTime || 12} minutes`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectGate("Gate 1");
+            }
+          }}
+        >
           <circle cx="250" cy="70" r="12" fill={getGateColor("Gate 1")} stroke="#fff" strokeWidth="2" />
           <text x="250" y="74" fill="#0d111b" fontSize="10" fontWeight="bold" textAnchor="middle">1</text>
         </g>
 
         {/* Gate 2 (East) */}
-        <g className="map-gate" onClick={() => onSelectGate("Gate 2")}>
+        <g 
+          className="map-gate" 
+          onClick={() => onSelectGate("Gate 2")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedGate === "Gate 2"}
+          aria-label={`Gate 2: Bud Light Gate (East) - Wait: ${gates?.find(g => g.id === "Gate 2")?.waitTime || 40} minutes`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectGate("Gate 2");
+            }
+          }}
+        >
           <circle cx="445" cy="250" r="12" fill={getGateColor("Gate 2")} stroke="#fff" strokeWidth="2" />
           <text x="445" y="254" fill="#0d111b" fontSize="10" fontWeight="bold" textAnchor="middle">2</text>
         </g>
 
         {/* Gate 3 (South) */}
-        <g className="map-gate" onClick={() => onSelectGate("Gate 3")}>
+        <g 
+          className="map-gate" 
+          onClick={() => onSelectGate("Gate 3")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedGate === "Gate 3"}
+          aria-label={`Gate 3: Pepsi Gate (South) - Wait: ${gates?.find(g => g.id === "Gate 3")?.waitTime || 5} minutes`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectGate("Gate 3");
+            }
+          }}
+        >
           <circle cx="250" cy="430" r="12" fill={getGateColor("Gate 3")} stroke="#fff" strokeWidth="2" />
           <text x="250" y="434" fill="#0d111b" fontSize="10" fontWeight="bold" textAnchor="middle">3</text>
         </g>
 
         {/* Gate 4 (West) */}
-        <g className="map-gate" onClick={() => onSelectGate("Gate 4")}>
+        <g 
+          className="map-gate" 
+          onClick={() => onSelectGate("Gate 4")}
+          tabIndex={0}
+          role="button"
+          aria-pressed={selectedGate === "Gate 4"}
+          aria-label={`Gate 4: HCLTech Gate (West) - Wait: ${gates?.find(g => g.id === "Gate 4")?.waitTime || 25} minutes`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelectGate("Gate 4");
+            }
+          }}
+        >
           <circle cx="55" cy="250" r="12" fill={getGateColor("Gate 4")} stroke="#fff" strokeWidth="2" />
           <text x="55" y="254" fill="#0d111b" fontSize="10" fontWeight="bold" textAnchor="middle">4</text>
         </g>

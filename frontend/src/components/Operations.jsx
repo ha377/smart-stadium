@@ -116,8 +116,9 @@ export default function Operations({
           </div>
           <form onSubmit={handleSubmit} className="incident-form">
             <div className="form-group">
-              <label className="form-label">Incident Type</label>
+              <label htmlFor="op-incident-type" className="form-label">Incident Type</label>
               <select 
+                id="op-incident-type"
                 className="form-select" 
                 value={formType} 
                 onChange={(e) => setFormType(e.target.value)}
@@ -130,8 +131,9 @@ export default function Operations({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Incident Title</label>
+              <label htmlFor="op-incident-title" className="form-label">Incident Title</label>
               <input 
+                id="op-incident-title"
                 type="text" 
                 className="form-input" 
                 placeholder="e.g. Broken lock on restroom D4" 
@@ -141,8 +143,9 @@ export default function Operations({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Description</label>
+              <label htmlFor="op-incident-desc" className="form-label">Description</label>
               <textarea 
+                id="op-incident-desc"
                 className="form-textarea" 
                 rows="3" 
                 placeholder="Details of what happened..."
@@ -152,8 +155,9 @@ export default function Operations({
             </div>
 
             <div className="form-group">
-              <label className="form-label">Location (Zone/Section)</label>
+              <label htmlFor="op-incident-loc" className="form-label">Location (Zone/Section)</label>
               <select 
+                id="op-incident-loc"
                 className="form-select" 
                 value={formLoc} 
                 onChange={(e) => setFormLoc(e.target.value)}
@@ -225,7 +229,9 @@ export default function Operations({
                     <div className="dispatch-controls">
                       {incident.status === "Active" ? (
                         <>
+                          <label htmlFor={`vol-assign-${incident.id}`} style={{ display: "none" }}>Assign Volunteer</label>
                           <select 
+                            id={`vol-assign-${incident.id}`}
                             className="dispatch-select"
                             value={selectedVolunteer[incident.id] || ""}
                             onChange={(e) => handleVolunteerSelect(incident.id, e.target.value)}

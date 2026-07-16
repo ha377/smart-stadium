@@ -113,8 +113,9 @@ export default function AiChat({ backendUrl }) {
           🤖 ArenaIQ Generative AI Fan Assistant
         </h3>
         <div className="lang-select-container">
-          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Language:</span>
+          <label htmlFor="ai-lang-select" style={{ fontSize: "0.8rem", color: "var(--text-muted)", cursor: "pointer" }}>Language:</label>
           <select 
+            id="ai-lang-select"
             className="lang-select" 
             value={language} 
             onChange={(e) => setLanguage(e.target.value)}
@@ -155,6 +156,7 @@ export default function AiChat({ backendUrl }) {
             {msg.sender === "ai" && (
               <button 
                 onClick={() => handleSpeak(msg.text)}
+                aria-label="Read AI response aloud"
                 style={{ 
                   background: "transparent", 
                   border: "none", 
@@ -185,6 +187,7 @@ export default function AiChat({ backendUrl }) {
         <input 
           type="text" 
           className="chat-input" 
+          aria-label="User query input"
           placeholder="Ask ArenaIQ (e.g. 'restroom lines in Zone C' or 'train delay')..." 
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}

@@ -21,12 +21,61 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Set developer-friendly CSP headers to prevent extension blockages
+// Input Sanitization Middleware to prevent XSS / HTML injection
+function sanitizeInput(val) {
+  if (typeof val !== "string") return val;
+  return val
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+    .replace(/\//g, "&#x2F;");
+}
+
 app.use((req, res, next) => {
+  if (req.body && typeof req.body === "object") {
+    for (const key in req.body) {
+      if (typeof req.body[key] === "string") {
+        req.body[key] = sanitizeInput(req.body[key]);
+      }
+    }
+  }
+  next();
+});
+
+// Secure HTTP Headers Middleware (Helmet-like protection)
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader(
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
   );
+  next();
+});
+
+// In-Memory Rate Limiting Middleware
+const rateLimitStore = {};
+app.use((req, res, next) => {
+  const ip = req.ip || req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+  const now = Date.now();
+  const limitWindow = 60 * 1000; // 1 minute
+  const maxRequests = 200; // max 200 requests/min
+  
+  if (!rateLimitStore[ip]) {
+    rateLimitStore[ip] = [];
+  }
+  
+  rateLimitStore[ip] = rateLimitStore[ip].filter(timestamp => now - timestamp < limitWindow);
+  
+  if (rateLimitStore[ip].length >= maxRequests) {
+    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  }
+  
+  rateLimitStore[ip].push(now);
   next();
 });
 
@@ -41,6 +90,9 @@ app.get("/api/stadium-state", (req, res) => {
   res.json(stadiumState);
 });
 
+// Simple in-memory cache for AI chat queries to maximize efficiency and reduce latency
+const chatCache = new Map();
+
 // Endpoint for AI chat assistant
 app.post("/api/chat", async (req, res) => {
   const { prompt, lang } = req.body;
@@ -48,8 +100,21 @@ app.post("/api/chat", async (req, res) => {
     return res.status(400).json({ error: "Prompt is required" });
   }
   
+  const cacheKey = `${lang || "en"}:${prompt.trim().toLowerCase()}`;
+  if (chatCache.has(cacheKey)) {
+    return res.json({ reply: chatCache.get(cacheKey) });
+  }
+  
   try {
     const reply = await queryAI(prompt, lang || "en");
+    
+    // Store in cache
+    chatCache.set(cacheKey, reply);
+    if (chatCache.size > 200) {
+      const firstKey = chatCache.keys().next().value;
+      chatCache.delete(firstKey);
+    }
+    
     res.json({ reply });
   } catch (error) {
     console.error("Chat error:", error);

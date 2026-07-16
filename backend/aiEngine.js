@@ -60,8 +60,13 @@ const LOCAL_TRANSLATIONS = {
  * Clean user prompt to detect core intent and provide a contextual real-time response using stadiumState
  */
 function localSmartResponse(prompt, lang = "en") {
-  const query = prompt.toLowerCase();
+  const query = prompt.trim().toLowerCase();
   const translations = LOCAL_TRANSLATIONS[lang] || LOCAL_TRANSLATIONS["en"];
+
+  // 0. Greetings
+  if (query === "hello" || query === "hi" || query === "hola" || query === "olá" || query === "مرحبا" || query === "hey") {
+    return translations.greeting;
+  }
 
   // 1. Accessibility queries
   if (query.includes("wheelchair") || query.includes("accessibility") || query.includes("disabled") || query.includes("silla de ruedas") || query.includes("أصحاب الهمم") || query.includes("ramp") || query.includes("elevator")) {
