@@ -4,16 +4,16 @@ import AiChat from "./components/AiChat";
 import Operations from "./components/Operations";
 import TransitSustainability from "./components/TransitSustainability";
 
-const BACKEND_URL = "http://localhost:3001";
+const BACKEND_URL = import.meta.env.VITE_API_URL || "https://smart-stadium-cfqu.onrender.com";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("command");
   const [stadiumData, setStadiumData] = useState(null);
-  
+
   // Selected visual helpers on map click
   const [selectedZone, setSelectedZone] = useState("B");
   const [selectedGate, setSelectedGate] = useState("Gate 2");
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -37,7 +37,7 @@ export default function App() {
 
   useEffect(() => {
     fetchStadiumState();
-    
+
     // Poll telemetry every 8 seconds for pseudo real-time sync
     const interval = setInterval(fetchStadiumState, 8000);
     return () => clearInterval(interval);
@@ -223,19 +223,19 @@ export default function App() {
 
         {/* Header Tabs */}
         <nav className="tab-navigation">
-          <button 
+          <button
             className={`tab-btn ${activeTab === "command" ? "active" : ""}`}
             onClick={() => setActiveTab("command")}
           >
             📊 Operations Desk
           </button>
-          <button 
+          <button
             className={`tab-btn ${activeTab === "assistant" ? "active" : ""}`}
             onClick={() => setActiveTab("assistant")}
           >
             🤖 AI Fan Assistant
           </button>
-          <button 
+          <button
             className={`tab-btn ${activeTab === "green" ? "active" : ""}`}
             onClick={() => setActiveTab("green")}
           >
@@ -246,15 +246,15 @@ export default function App() {
 
       {/* Main Dashboard Layout */}
       <main className="dashboard-grid">
-        
+
         {/* Left Side: Current Tab Content */}
         <section className="main-content">
           {activeTab === "command" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <div className="glass-panel" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                
+
                 {/* SVG Stadium Map */}
-                <Map 
+                <Map
                   stadiumData={stadiumData}
                   onSelectZone={selectZone}
                   selectedZone={selectedZone}
@@ -266,7 +266,7 @@ export default function App() {
                 <div style={{ padding: "1.5rem", borderLeft: "1px solid var(--border-color)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div>
                     <h3 style={{ marginBottom: "1rem", color: "var(--secondary)" }}>🔍 Stadium Node Inspector</h3>
-                    
+
                     {currentZone && (
                       <div>
                         <h4 style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>Zone {selectedZone}: {currentZone.name}</h4>
@@ -275,12 +275,12 @@ export default function App() {
                           <div>Capacity Load: <strong>{currentZone.current.toLocaleString()} / {currentZone.capacity.toLocaleString()} ({Math.round(currentZone.current / currentZone.capacity * 100)}%)</strong></div>
                           <div>Accessibility Friendly Path: <strong>{currentZone.accessibilityFriendly ? "Yes (Elevator + Ramp access)" : "No (Stairwells only - Use Elevator Section 120)"}</strong></div>
                         </div>
-                        
+
                         <div className="ai-recommendation-box" style={{ marginTop: "1.5rem" }}>
                           <strong>🧠 Zone AI Recommendation:</strong>
                           <p style={{ marginTop: "0.25rem", fontStyle: "italic" }}>
-                            {currentZone.status === "Critical" 
-                              ? "⚠️ Escalator load spike in Zone E. Dispatching volunteer staff to direct guests to elevators near Section 120." 
+                            {currentZone.status === "Critical"
+                              ? "⚠️ Escalator load spike in Zone E. Dispatching volunteer staff to direct guests to elevators near Section 120."
                               : "Traffic flow normal. Recommend concession stands in this zone to nearby fans."}
                           </p>
                         </div>
@@ -299,8 +299,8 @@ export default function App() {
                         <div className="ai-recommendation-box" style={{ marginTop: "1.5rem" }}>
                           <strong>🧠 Gate AI Recommendation:</strong>
                           <p style={{ marginTop: "0.25rem", fontStyle: "italic" }}>
-                            {currentGate.waitTime > 30 
-                              ? `⚠️ High congestion at ${currentGate.id}. Dynamic display board has been instructed to redirect incoming ticket-holders to Pepsi Gate (Gate 3).` 
+                            {currentGate.waitTime > 30
+                              ? `⚠️ High congestion at ${currentGate.id}. Dynamic display board has been instructed to redirect incoming ticket-holders to Pepsi Gate (Gate 3).`
                               : "Flow within optimal bounds. No manual override required."}
                           </p>
                         </div>
@@ -321,7 +321,7 @@ export default function App() {
               </div>
 
               {/* Incidents & Simulation */}
-              <Operations 
+              <Operations
                 stadiumData={stadiumData}
                 onTriggerCrowdSpike={handleTriggerCrowdSpike}
                 onClearCrowdSpike={handleClearCrowdSpike}
@@ -337,7 +337,7 @@ export default function App() {
           )}
 
           {activeTab === "green" && (
-            <TransitSustainability 
+            <TransitSustainability
               stadiumData={stadiumData}
               onLogEcoAction={handleLogEcoAction}
             />
@@ -346,7 +346,7 @@ export default function App() {
 
         {/* Right Side: Operations Quick Overview Telemetry Panel */}
         <section className="sidebar-content">
-          
+
           {/* Gate Overview Telemetry */}
           <div className="glass-panel telemetry-card">
             <div className="card-header-styled">
@@ -358,13 +358,12 @@ export default function App() {
                   <span className="gate-name">{g.id} - {g.name.split(" ")[0]}</span>
                   <span className="gate-sub">Wait: {g.waitTime} mins</span>
                 </div>
-                <span className={`gate-status-pill ${
-                  g.status === "Normal" || g.status === "Clear" 
-                    ? "status-normal" 
-                    : g.status === "Moderate" 
-                    ? "status-moderate" 
-                    : "status-critical"
-                }`}>
+                <span className={`gate-status-pill ${g.status === "Normal" || g.status === "Clear"
+                    ? "status-normal"
+                    : g.status === "Moderate"
+                      ? "status-moderate"
+                      : "status-critical"
+                  }`}>
                   {g.status}
                 </span>
               </div>
@@ -382,25 +381,24 @@ export default function App() {
                   <span className="gate-name">{c.name}</span>
                   <span className="gate-sub">Zone {c.zone} | Wait: {c.waitTime} mins</span>
                 </div>
-                <span className={`gate-status-pill ${
-                  c.stockStatus === "Optimal" ? "status-normal" : "status-critical"
-                }`} style={{ fontSize: "0.75rem" }}>
+                <span className={`gate-status-pill ${c.stockStatus === "Optimal" ? "status-normal" : "status-critical"
+                  }`} style={{ fontSize: "0.75rem" }}>
                   {c.stockStatus}
                 </span>
               </div>
             ))}
           </div>
-          
+
         </section>
 
       </main>
 
       {/* Footer */}
-      <footer style={{ 
-        textAlign: "center", 
-        padding: "1.5rem", 
-        borderTop: "1px solid var(--border-color)", 
-        color: "var(--text-muted)", 
+      <footer style={{
+        textAlign: "center",
+        padding: "1.5rem",
+        borderTop: "1px solid var(--border-color)",
+        color: "var(--text-muted)",
         fontSize: "0.85rem",
         background: "rgba(13, 17, 27, 0.8)",
         marginTop: "auto"
