@@ -910,3 +910,82 @@ a:hover {
     padding: 1rem;
   }
 }
+
+/* Accessibility Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Carbon History Chart Styles */
+.carbon-chart-container {
+  margin-top: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+.carbon-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.carbon-chart-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--secondary);
+}
+.carbon-chart-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.carbon-svg-chart {
+  width: 100%;
+  height: 120px;
+  overflow: visible;
+}
+.carbon-chart-grid-line {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
+}
+.carbon-chart-line {
+  fill: none;
+  stroke: url(#carbonGradient);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.carbon-chart-area {
+  fill: url(#carbonAreaGradient);
+}
+.carbon-chart-dot {
+  fill: var(--primary);
+  stroke: var(--bg-space);
+  stroke-width: 2;
+  transition: all var(--transition-fast);
+}
+.carbon-chart-dot:hover {
+  fill: var(--secondary);
+  r: 6px;
+}
+.carbon-chart-axis {
+  stroke: rgba(255, 255, 255, 0.15);
+  stroke-width: 1;
+}
+.carbon-chart-label {
+  font-size: 9px;
+  fill: var(--text-muted);
+}
+.carbon-chart-label-y {
+  font-size: 8px;
+  fill: var(--text-muted);
+}
+

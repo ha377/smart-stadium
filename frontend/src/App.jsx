@@ -222,20 +222,32 @@ export default function App() {
         </div>
 
         {/* Header Tabs */}
-        <nav className="tab-navigation">
+        <nav className="tab-navigation" role="tablist" aria-label="Stadium Portal Tabs">
           <button
+            id="tab-command"
+            role="tab"
+            aria-selected={activeTab === "command"}
+            aria-controls="panel-command"
             className={`tab-btn ${activeTab === "command" ? "active" : ""}`}
             onClick={() => setActiveTab("command")}
           >
             📊 Operations Desk
           </button>
           <button
+            id="tab-assistant"
+            role="tab"
+            aria-selected={activeTab === "assistant"}
+            aria-controls="panel-assistant"
             className={`tab-btn ${activeTab === "assistant" ? "active" : ""}`}
             onClick={() => setActiveTab("assistant")}
           >
             🤖 AI Fan Assistant
           </button>
           <button
+            id="tab-green"
+            role="tab"
+            aria-selected={activeTab === "green"}
+            aria-controls="panel-green"
             className={`tab-btn ${activeTab === "green" ? "active" : ""}`}
             onClick={() => setActiveTab("green")}
           >
@@ -250,7 +262,7 @@ export default function App() {
         {/* Left Side: Current Tab Content */}
         <section className="main-content">
           {activeTab === "command" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            <div id="panel-command" role="tabpanel" aria-labelledby="tab-command" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <div className="glass-panel" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
 
                 {/* SVG Stadium Map */}
@@ -333,14 +345,18 @@ export default function App() {
           )}
 
           {activeTab === "assistant" && (
-            <AiChat backendUrl={BACKEND_URL} />
+            <div id="panel-assistant" role="tabpanel" aria-labelledby="tab-assistant">
+              <AiChat backendUrl={BACKEND_URL} />
+            </div>
           )}
 
           {activeTab === "green" && (
-            <TransitSustainability
-              stadiumData={stadiumData}
-              onLogEcoAction={handleLogEcoAction}
-            />
+            <div id="panel-green" role="tabpanel" aria-labelledby="tab-green">
+              <TransitSustainability
+                stadiumData={stadiumData}
+                onLogEcoAction={handleLogEcoAction}
+              />
+            </div>
           )}
         </section>
 

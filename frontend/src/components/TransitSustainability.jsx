@@ -18,13 +18,38 @@ export default function TransitSustainability({ stadiumData, onLogEcoAction }) {
     const result = await onLogEcoAction(username, ecoAction);
     if (result && result.pointsGained) {
       setSuccessMessage(`♻️ Thank you, ${username}! You've gained ${result.pointsGained} EcoPoints. Offsetting carbon by ${result.carbonOffset}kg!`);
-      // Clear username after 3 seconds
+      // Clear username after 5 seconds
       setTimeout(() => {
         setSuccessMessage("");
         setUsername("");
       }, 5000);
     }
   };
+
+  // Graph plotting calculations
+  const history = sustainability.carbonHistory || [];
+  const paddingLeft = 45;
+  const paddingRight = 15;
+  const paddingTop = 15;
+  const paddingBottom = 20;
+  const chartWidth = 450 - paddingLeft - paddingRight;
+  const chartHeight = 120 - paddingTop - paddingBottom;
+
+  const values = history.map(h => h.value);
+  const minVal = Math.max(0, Math.min(...values) - 30);
+  const maxVal = Math.max(...values) + 30;
+  const valRange = maxVal - minVal || 100;
+
+  const points = history.map((pt, idx) => {
+    const x = paddingLeft + (idx / Math.max(1, history.length - 1)) * chartWidth;
+    const y = paddingTop + chartHeight - ((pt.value - minVal) / valRange) * chartHeight;
+    return { x, y, time: pt.time, value: pt.value };
+  });
+
+  const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+  const areaPath = points.length > 0 
+    ? `${linePath} L ${points[points.length - 1].x} ${paddingTop + chartHeight} L ${points[0].x} ${paddingTop + chartHeight} Z` 
+    : "";
 
   return (
     <div className="incident-grid">
@@ -51,8 +76,93 @@ export default function TransitSustainability({ stadiumData, onLogEcoAction }) {
           </div>
         </div>
 
+        {/* Carbon Offset Graph */}
+        <div className="carbon-chart-container">
+          <div className="carbon-chart-header">
+            <div>
+              <h4 className="carbon-chart-title">📈 Carbon Footprint Reduction Trend</h4>
+              <p className="carbon-chart-subtitle">Direct impact of fan sustainability actions (kg CO2 emissions)</p>
+            </div>
+          </div>
+          {history.length > 0 ? (
+            <svg viewBox="0 0 450 120" className="carbon-svg-chart" aria-label="Line graph showing carbon emissions reduction over time" role="img">
+              <defs>
+                <linearGradient id="carbonGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#60efff" />
+                  <stop offset="100%" stopColor="#00ff87" />
+                </linearGradient>
+                <linearGradient id="carbonAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#00ff87" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#00ff87" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {/* Grid Lines */}
+              {[0, 0.25, 0.5, 0.75, 1].map((pct, idx) => {
+                const y = paddingTop + chartHeight * pct;
+                const gridVal = maxVal - pct * valRange;
+                return (
+                  <g key={idx}>
+                    <line 
+                      x1={paddingLeft} 
+                      y1={y} 
+                      x2={450 - paddingRight} 
+                      y2={y} 
+                      className="carbon-chart-grid-line" 
+                    />
+                    <text 
+                      x={paddingLeft - 8} 
+                      y={y + 3} 
+                      textAnchor="end" 
+                      className="carbon-chart-label-y"
+                    >
+                      {Math.round(gridVal)} kg
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Area Under Line */}
+              {areaPath && <path d={areaPath} className="carbon-chart-area" />}
+
+              {/* The Line */}
+              {linePath && <path d={linePath} className="carbon-chart-line" />}
+
+              {/* Dots on Data Points */}
+              {points.map((p, idx) => (
+                <circle 
+                  key={idx} 
+                  cx={p.x} 
+                  cy={p.y} 
+                  r="4" 
+                  className="carbon-chart-dot"
+                >
+                  <title>{`${p.value} kg CO2 at ${p.time}`}</title>
+                </circle>
+              ))}
+
+              {/* X Axis Labels */}
+              {points.map((p, idx) => (
+                <text 
+                  key={idx} 
+                  x={p.x} 
+                  y={120 - 4} 
+                  textAnchor="middle" 
+                  className="carbon-chart-label"
+                >
+                  {p.time}
+                </text>
+              ))}
+            </svg>
+          ) : (
+            <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontStyle: "italic", textAlign: "center", padding: "1rem" }}>
+              No carbon data logged yet.
+            </div>
+          )}
+        </div>
+
         {/* Log Action form */}
-        <div style={{ background: "rgba(0,0,0,0.15)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--border-color)", marginBottom: "1.5rem" }}>
+        <div style={{ background: "rgba(0,0,0,0.15)", padding: "1rem", borderRadius: "10px", border: "1px solid var(--border-color)", marginBottom: "1.5rem", marginTop: "1.5rem" }}>
           <h4 style={{ marginBottom: "0.5rem", fontSize: "0.95rem" }}>📝 Submit Your Eco Action</h4>
           <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
             Participated in sustainable travel or waste reduction? Log it to decrease stadium emissions.
@@ -74,7 +184,7 @@ export default function TransitSustainability({ stadiumData, onLogEcoAction }) {
 
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             <div className="form-group">
-              <label htmlFor="eco-username-input" style={{ display: "none" }}>Fan Nickname</label>
+              <label htmlFor="eco-username-input" className="sr-only">Fan Nickname</label>
               <input 
                 id="eco-username-input"
                 type="text" 
@@ -86,7 +196,7 @@ export default function TransitSustainability({ stadiumData, onLogEcoAction }) {
             </div>
             
             <div className="form-group">
-              <label htmlFor="eco-action-select" style={{ display: "none" }}>Select Eco Action</label>
+              <label htmlFor="eco-action-select" className="sr-only">Select Eco Action</label>
               <select 
                 id="eco-action-select"
                 className="form-select" 
@@ -97,6 +207,8 @@ export default function TransitSustainability({ stadiumData, onLogEcoAction }) {
                 <option value="public_transit">Took NJ Transit Train / Shuttle Bus (+40 pts)</option>
                 <option value="bring_reusable_cup">Brought Reusable Cup / Mug (+15 pts)</option>
                 <option value="carpool">Carpool with 4+ people (+30 pts)</option>
+                <option value="bottle_refill">Reusable Water Bottle Refill (+20 pts)</option>
+                <option value="waste_sorting">Sorted Waste / Compost (+20 pts)</option>
               </select>
             </div>
 

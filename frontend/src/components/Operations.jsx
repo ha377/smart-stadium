@@ -229,7 +229,7 @@ export default function Operations({
                     <div className="dispatch-controls">
                       {incident.status === "Active" ? (
                         <>
-                          <label htmlFor={`vol-assign-${incident.id}`} style={{ display: "none" }}>Assign Volunteer</label>
+                          <label htmlFor={`vol-assign-${incident.id}`} className="sr-only">Assign Volunteer</label>
                           <select 
                             id={`vol-assign-${incident.id}`}
                             className="dispatch-select"

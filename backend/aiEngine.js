@@ -1,11 +1,24 @@
+/**
+ * @fileoverview AI processing engine for ArenaIQ. Handles queries directed to
+ * the Google Gemini API or redirects to the high-fidelity local smart NLP fallback.
+ */
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { stadiumState } from "./stadiumState.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-// Attempt to load Google Gen AI
+/**
+ * Generative AI client reference.
+ * @type {GoogleGenerativeAI|null}
+ */
 let aiClient = null;
+
+/**
+ * Flag denoting if Gemini API is available and active.
+ * @type {boolean}
+ */
 let useGemini = false;
 
 if (process.env.GEMINI_API_KEY) {
@@ -20,7 +33,11 @@ if (process.env.GEMINI_API_KEY) {
   console.log("AI: No GEMINI_API_KEY found. Using high-fidelity local smart NLP engine.");
 }
 
-// Translations helper dictionary for offline mode
+/**
+ * Static lookup dictionary containing multi-lingual greetings and responses
+ * for the local NLP engine fallback.
+ * @type {Object<string, Object<string, string>>}
+ */
 const LOCAL_TRANSLATIONS = {
   es: {
     greeting: "¡Hola! Soy tu Asistente ArenaIQ. ¿Cómo puedo ayudarte hoy en el Estadio MetLife?",
@@ -57,7 +74,10 @@ const LOCAL_TRANSLATIONS = {
 };
 
 /**
- * Clean user prompt to detect core intent and provide a contextual real-time response using stadiumState
+ * Formulates a reply using the local NLP rule engine when offline or keyless.
+ * @param {string} prompt - User request query.
+ * @param {string} [lang="en"] - Two-letter language code constraint.
+ * @returns {string} The resolved textual response.
  */
 function localSmartResponse(prompt, lang = "en") {
   const query = prompt.trim().toLowerCase();
@@ -79,7 +99,6 @@ function localSmartResponse(prompt, lang = "en") {
     stadiumState.gates.forEach(g => {
       response += `- **${g.name} (${g.id})**: ${g.waitTime} min wait time | Status: *${g.status}* (Queue: approx ${g.lineLength} fans)\n`;
     });
-    // Add dynamic advice
     const clearGate = stadiumState.gates.reduce((prev, curr) => prev.waitTime < curr.waitTime ? prev : curr);
     response += `\n💡 **AI Operations Recommendation**: We recommend entering through **${clearGate.name} (${clearGate.id})**, which has the shortest delay (${clearGate.waitTime} mins).`;
     return response;
@@ -127,11 +146,26 @@ function localSmartResponse(prompt, lang = "en") {
 }
 
 /**
- * Main AI Query Handler
- * If Gemini API is available, calls Gemini injecting the live stadium telemetry.
- * Otherwise, falls back to the smart local response.
+ * Main AI Query Handler. Intercepts queries to check for security exploits (prompt injections),
+ * and feeds queries either to the Gemini API with structured stadium state context or falls back.
+ * @param {string} prompt - User question query.
+ * @param {string} [lang="en"] - Language context.
+ * @returns {Promise<string>} Textual response.
  */
 export async function queryAI(prompt, lang = "en") {
+  const normalizedPrompt = (prompt || "").trim().toLowerCase();
+
+  // Prompt Injection Guardrails
+  if (
+    normalizedPrompt.includes("ignore") &&
+    (normalizedPrompt.includes("instruction") ||
+      normalizedPrompt.includes("rule") ||
+      normalizedPrompt.includes("system") ||
+      normalizedPrompt.includes("directives"))
+  ) {
+    return "Security Guardrail: I'm sorry, but I cannot override stadium operations directives or system instructions.";
+  }
+
   if (!useGemini) {
     return localSmartResponse(prompt, lang);
   }

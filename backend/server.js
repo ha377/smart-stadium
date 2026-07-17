@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Express application server for FIFA 2026 ArenaIQ.
+ * Provides APIs for real-time stadium telemetry, operations control, incident reporting,
+ * fan assistant chats, and sustainability tracking.
+ */
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -17,29 +23,47 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS configuration - allow all origins in development
+// CORS configuration - allow all origins in development, restrict in production if needed
 app.use(cors());
 app.use(express.json());
 
-// Input Sanitization Middleware to prevent XSS / HTML injection
-function sanitizeInput(val) {
-  if (typeof val !== "string") return val;
-  return val
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;")
-    .replace(/\//g, "&#x2F;");
+/**
+ * Recursively sanitizes string inputs to prevent HTML injections/XSS,
+ * protecting against prototype pollution vulnerabilities.
+ * @param {*} val - Value to sanitize.
+ * @returns {*} The sanitized output.
+ */
+function sanitizeValue(val) {
+  if (typeof val === "string") {
+    return val
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;")
+      .replace(/\//g, "&#x2F;");
+  }
+  if (Array.isArray(val)) {
+    return val.map(sanitizeValue);
+  }
+  if (val !== null && typeof val === "object") {
+    const sanitized = {};
+    const keys = Object.keys(val);
+    for (const key of keys) {
+      if (key === "__proto__" || key === "constructor") {
+        continue; // Prevent Prototype Pollution
+      }
+      sanitized[key] = sanitizeValue(val[key]);
+    }
+    return sanitized;
+  }
+  return val;
 }
 
+// Global sanitization middleware for request body
 app.use((req, res, next) => {
   if (req.body && typeof req.body === "object") {
-    for (const key in req.body) {
-      if (typeof req.body[key] === "string") {
-        req.body[key] = sanitizeInput(req.body[key]);
-      }
-    }
+    req.body = sanitizeValue(req.body);
   }
   next();
 });
@@ -54,6 +78,13 @@ app.use((req, res, next) => {
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
   );
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  res.setHeader("X-DNS-Prefetch-Control", "off");
+  res.setHeader("X-Download-Options", "noopen");
+  res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+  res.setHeader("Origin-Agent-Cluster", "?1");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   next();
 });
 
@@ -79,7 +110,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Logger middleware
+// Request Logger middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
@@ -96,8 +127,11 @@ const chatCache = new Map();
 // Endpoint for AI chat assistant
 app.post("/api/chat", async (req, res) => {
   const { prompt, lang } = req.body;
-  if (!prompt) {
-    return res.status(400).json({ error: "Prompt is required" });
+  if (!prompt || typeof prompt !== "string" || prompt.trim() === "") {
+    return res.status(400).json({ error: "Prompt must be a non-empty string" });
+  }
+  if (lang && typeof lang !== "string") {
+    return res.status(400).json({ error: "Language parameter must be a string" });
   }
   
   const cacheKey = `${lang || "en"}:${prompt.trim().toLowerCase()}`;
@@ -125,17 +159,23 @@ app.post("/api/chat", async (req, res) => {
 // Simulation endpoint: Crowd spike trigger
 app.post("/api/simulate-crowd", (req, res) => {
   const { gateId, action } = req.body; // action: "spike" | "clear"
-  if (!gateId || !action) {
-    return res.status(400).json({ error: "gateId and action are required" });
+  if (!gateId || typeof gateId !== "string") {
+    return res.status(400).json({ error: "gateId is required and must be a string" });
+  }
+  if (!action || (action !== "spike" && action !== "clear")) {
+    return res.status(400).json({ error: "action must be 'spike' or 'clear'" });
+  }
+
+  const validGates = ["Gate 1", "Gate 2", "Gate 3", "Gate 4"];
+  if (!validGates.includes(gateId)) {
+    return res.status(404).json({ error: `Gate ${gateId} not found` });
   }
 
   let result;
   if (action === "spike") {
     result = simulateCrowdSpike(gateId);
-  } else if (action === "clear") {
-    result = clearCrowdSpike(gateId);
   } else {
-    return res.status(400).json({ error: "Action must be 'spike' or 'clear'" });
+    result = clearCrowdSpike(gateId);
   }
 
   if (result.success) {
@@ -148,8 +188,22 @@ app.post("/api/simulate-crowd", (req, res) => {
 // Operations endpoint: Report incident
 app.post("/api/incidents", (req, res) => {
   const { type, title, description, location } = req.body;
-  if (!type || !title || !description || !location) {
-    return res.status(400).json({ error: "type, title, description, and location are required" });
+  if (!type || typeof type !== "string" || type.trim() === "") {
+    return res.status(400).json({ error: "type is required and must be a non-empty string" });
+  }
+  if (!title || typeof title !== "string" || title.trim() === "") {
+    return res.status(400).json({ error: "title is required and must be a non-empty string" });
+  }
+  if (!description || typeof description !== "string" || description.trim() === "") {
+    return res.status(400).json({ error: "description is required and must be a non-empty string" });
+  }
+  if (!location || typeof location !== "string" || location.trim() === "") {
+    return res.status(400).json({ error: "location is required and must be a non-empty string" });
+  }
+
+  const validTypes = ["cleanup", "medical", "security", "facility"];
+  if (!validTypes.includes(type.toLowerCase())) {
+    return res.status(400).json({ error: "type must be Cleanup, Medical, Security, or Facility" });
   }
 
   const incident = reportIncident(type, title, description, location);
@@ -159,8 +213,11 @@ app.post("/api/incidents", (req, res) => {
 // Operations endpoint: Assign volunteer to incident
 app.post("/api/incidents/assign", (req, res) => {
   const { incidentId, volunteerName } = req.body;
-  if (!incidentId || !volunteerName) {
-    return res.status(400).json({ error: "incidentId and volunteerName are required" });
+  if (!incidentId || typeof incidentId !== "string" || incidentId.trim() === "") {
+    return res.status(400).json({ error: "incidentId is required and must be a non-empty string" });
+  }
+  if (!volunteerName || typeof volunteerName !== "string" || volunteerName.trim() === "") {
+    return res.status(400).json({ error: "volunteerName is required and must be a non-empty string" });
   }
 
   const result = assignIncident(incidentId, volunteerName);
@@ -180,8 +237,8 @@ app.post("/api/incidents/assign", (req, res) => {
 // Operations endpoint: Resolve incident
 app.post("/api/incidents/resolve", (req, res) => {
   const { incidentId } = req.body;
-  if (!incidentId) {
-    return res.status(400).json({ error: "incidentId is required" });
+  if (!incidentId || typeof incidentId !== "string" || incidentId.trim() === "") {
+    return res.status(400).json({ error: "incidentId is required and must be a non-empty string" });
   }
 
   const result = resolveIncident(incidentId);
@@ -199,9 +256,17 @@ app.post("/api/incidents/resolve", (req, res) => {
 
 // Fan endpoint: Submit sustainability eco action
 app.post("/api/sustainability/action", (req, res) => {
-  const { username, actionType } = req.body; // actionType: "recycling" | "public_transit" | "bring_reusable_cup" | "carpool"
-  if (!username || !actionType) {
-    return res.status(400).json({ error: "username and actionType are required" });
+  const { username, actionType } = req.body;
+  if (!username || typeof username !== "string" || username.trim() === "") {
+    return res.status(400).json({ error: "username is required and must be a non-empty string" });
+  }
+  if (!actionType || typeof actionType !== "string") {
+    return res.status(400).json({ error: "actionType is required and must be a string" });
+  }
+
+  const validActionTypes = ["recycling", "public_transit", "bring_reusable_cup", "carpool", "bottle_refill", "waste_sorting"];
+  if (!validActionTypes.includes(actionType)) {
+    return res.status(400).json({ error: `Invalid actionType. Allowed values are: ${validActionTypes.join(", ")}` });
   }
 
   try {
@@ -222,9 +287,16 @@ app.get("/health", (req, res) => {
   res.json({ status: "healthy", timestamp: new Date() });
 });
 
-app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`⚽ FIFA 2026 ArenaIQ API Server started on port ${PORT}`);
-  console.log(`🚀 Ready to receive stadium operations requests`);
-  console.log(`====================================================`);
-});
+const isTesting = process.env.NODE_ENV === "test" || process.argv.includes("--test") || process.argv.some(arg => arg.includes(".test."));
+
+if (!isTesting) {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`⚽ FIFA 2026 ArenaIQ API Server started on port ${PORT}`);
+    console.log(`🚀 Ready to receive stadium operations requests`);
+    console.log(`====================================================`);
+  });
+}
+
+export { sanitizeValue };
+

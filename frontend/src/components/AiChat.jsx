@@ -143,7 +143,7 @@ export default function AiChat({ backendUrl }) {
       </div>
 
       {/* Message Screen */}
-      <div className="chat-messages">
+      <div className="chat-messages" aria-live="polite" aria-relevant="additions">
         {messages.map((msg, idx) => (
           <div 
             key={idx} 

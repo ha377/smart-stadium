@@ -52,7 +52,7 @@ export default function Map({ stadiumData, onSelectZone, selectedZone, onSelectG
       </p>
 
       {/* SVG Stadium Map */}
-      <svg viewBox="0 0 500 500" className="stadium-svg">
+      <svg viewBox="0 0 500 500" className="stadium-svg" role="img" aria-label="Interactive Stadium Map Layout displaying live gate wait times and zone densities">
         <defs>
           <radialGradient id="fieldGlow" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#00ff87" stopOpacity="0.25" />
